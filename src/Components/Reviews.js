@@ -6,37 +6,30 @@ import ReviewForm from "./ReviewForm";
 
 const API = process.env.REACT_APP_API_URL;
 
-
 function Reviews() {
-  const [reviews, setReviews] = useState([]);
+  const [reviews, setReviews] = useState(null);
   let { id } = useParams();
-  
+
   const handleAdd = (newReview) => {
     axios
       .post(`${API}/songs/${id}/reviews`, newReview)
-      .then(
-        (response) => {
-          setReviews([response.data, ...reviews]);
-        },
-        (error) => console.error(error)
-      )
+      .then((response) => {
+        setReviews([response.data, ...reviews]);
+      })
       .catch((c) => console.warn("catch", c));
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = (reviewId) => {
     axios
-      .delete(`${API}/songs/${id}/reviews/${id}`)
-      .then(
-        (response) => {
-          const copyReviewArray = [...reviews];
-          const indexDeletedReview = copyReviewArray.findIndex((review) => {
-            return review.id === id;
-          });
-          copyReviewArray.splice(indexDeletedReview, 1);
-          setReviews(copyReviewArray);
-        },
-        (error) => console.error(error)
-      )
+      .delete(`${API}/songs/${id}/reviews/${reviewId}`)
+      .then((response) => {
+        const copyReviewArray = [...reviews];
+        const indexDeletedReview = copyReviewArray.findIndex((review) => {
+          return review.id === reviewId;
+        });
+        copyReviewArray.splice(indexDeletedReview, 1);
+        setReviews(copyReviewArray);
+      })
       .catch((c) => console.warn("catch", c));
   };
 
@@ -56,25 +49,28 @@ function Reviews() {
 
   useEffect(() => {
     axios.get(`${API}/songs/${id}/reviews`).then((response) => {
-      console.log(response.data);
-      setReviews(response.data);
+      if (Array.isArray(response.data)) {
+        setReviews(response.data);
+      } else {
+        console.warn("Response data is not an array:", response.data);
+      }
     });
   }, [id, API]);
 
-  
   return (
     <section className="Reviews">
-      <h2>Song Reviews</h2>
+      <h2>Reviews</h2>
       <ReviewForm handleSubmit={handleAdd}>
         <h3>Add a New Review</h3>
       </ReviewForm>
-      {reviews.map((review) => (
+      {reviews && reviews.map((review) => (
         <Review
-        key={review.id}
-        review={review}
-        handleSubmit={handleEdit}
-        handleDelete={handleDelete}
-      />      ))}
+          key={review.id}
+          review={review}
+          handleSubmit={handleEdit}
+          handleDelete={handleDelete}
+        />
+      ))}
     </section>
   );
 }
